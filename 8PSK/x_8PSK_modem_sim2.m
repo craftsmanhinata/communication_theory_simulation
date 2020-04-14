@@ -7,6 +7,8 @@
 %%%%   程序说明
 %本程序实验MATLAB帮助文件中给出的8PSK的使用放法
 %主要是实验pskmod的使用方法
+%按照这种方法可以近似仿真2/4/8/16等各阶PSK调制。
+%但是根据数上所说超过8PSK后，就会使用QAM了。
 
 %%%        仿真环境 
 % 软件版本：matlab 2019a
@@ -16,8 +18,8 @@ clear;
 close all;
 
 %Set the modulation order to 4.
-M = 2;
-snr = 3;
+M = 32;
+snr = 30;
 
 %Generate random data symbols.
 data = randi([0 M-1],1000,1);

@@ -6,7 +6,7 @@
 
 %%%%   程序说明
 %本程序实验MATLAB帮助文件中给出的8PSK的使用放法
-%主要是实验pskmod的使用方法
+%
 
 %%%        仿真环境 
 % 软件版本：matlab 2019a
@@ -30,10 +30,12 @@ ml = 3; %每个码元的bit数，3代表8PSK
 
 nd = sn*ml;%3000，总的bit数
 %Origin_code = randi(2,1,nd)-1;
-Origin_code = randi([0,1],1,nd);
-inf_phase_origin = 0;
-L = length(Origin_code)/3;  %码元个数
-inf_phase_out = zeros(1,L);
+Origin_code = randi([0,1],1,nd);%生成待传输bit流，共3000bit
+inf_phase_origin = 0;%初相？
+L = length(Origin_code)/3;  %码元个数，就是sn
+inf_phase_out = zeros(1,L); %输出的相位，总共有sn个。
+
+%根据每3个bit来确定1个输出的相位，采用格雷码
 for i = 1:L
     len = (i-1)*3;%Origin_code的第len个开始取ml个bit
     if (Origin_code(len+1)==0)&&(Origin_code(len+2)==0)&&(Origin_code(len+3)==0)
@@ -53,26 +55,32 @@ for i = 1:L
     elseif (Origin_code(len+1)==1)&&(Origin_code(len+2)==0)&&(Origin_code(len+3)==0)
         inf_phase_out(i) = inf_phase_origin+7*pi/4;
     end
-    
-    %inf_phase_origin = inf_phase_out(i);
+    inf_phase_origin = inf_phase_out(i);%更新初相，每确定一个码元的相位后都进行更新
 end
 
+%这里分I、Q两路，通过这两路的值就能确定一个信号相位。
 Transmit_code_I = cos(inf_phase_out);
 Transmit_code_Q = sin(inf_phase_out);
 
 
-Freq_Sample = 1e5;
+Freq_Sample = 1000;
 fcarrier = 100; %采样频偏
 
-ophase = 0*pi;
+%这里是DSP里面的一些知识，要理顺了
+%Freq_Sample是采样率，fcarrier是载波频率。利用exp进行频率移动的时候，是要满足DFT移频的定义的
+
+
+ophase = 0*pi;%载波初相
 Signal_Source = Transmit_code_I + 1i*Transmit_code_Q;
-Simulation_Length = length(Transmit_code_I);
-Carrier = exp(1i*(fcarrier/Freq_Sample*(1:Simulation_Length)+ophase));
-%Carrier = exp(1i*2*pi(fcarrier/Freq_Sample*(1:Simulation_Length)+ophase));
+Simulation_Length = length(Transmit_code_I);%还是符号数目sn
+%Carrier = exp(1i*(fcarrier/Freq_Sample*(1:Simulation_Length)+ophase));
+Carrier = exp(1i*2*pi*(fcarrier/Freq_Sample*(1:Simulation_Length)+ophase));
+%dft点数有意义，频率值后面才有意义
 Signal_Channel=Signal_Source.*Carrier;%移频，发送信号
 
 %接收机部分,省略了加噪声的过程
-Simulation_Length = length(Signal_Channel);
+%这是一些准备。
+Simulation_Length = length(Signal_Channel);%还是符号数目sn
 Signal_PLL = zeros(Simulation_Length, 1);
 NCO_Phase = zeros(Simulation_Length,1);
 
